@@ -2,43 +2,42 @@ import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.enums import ParseMode
 
 # --- SOZLAMALAR ---
-TOKEN = '8642617336:AAEtQc8o0YEqKRH7Rt...' # O'z tokeningizni yozing
-ADMIN_ID = 8642617336 # O'z ID raqamingiz
+TOKEN = '8642617336:AAEtQc8o0YEqKRH7Rt...' 
+ADMIN_ID = 8642617336 
 
-# Yangilangan majburiy obuna kanallari
-CHANNELS = [
-    "@khidirov_garand1",
-    "@freefireakkauntsavdokhidirov",
-    "@khidirovotzif"
-] 
+CHANNELS = ["@khidirov_garand1", "@freefireakkauntsavdokhidirov", "@khidirovotzif"] 
 
+# Ma'lumotlar bazasi
 users_db = {} 
-referrals = {} 
+
+# FSM - Holatlarni boshqarish (summa va chekni ketma-ket so'rash uchun)
+class FillBalance(StatesGroup):
+    waiting_for_amount = State()
+    waiting_for_photo = State()
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# --- NARXLAR ---
 PRICES = {
     "💎 100+10": 10, "💎 310": 30, "💎 520": 55, "💎 1060": 106,
     "💎 2180": 220, "💎 5600": 550, "📅 Haftalik": 20, "🌕 Oylik": 100,
     "☀️ Kunlik": 5, "📈 Level Up": 30, "🎟 Booyah Pass": 30
 }
 
-# --- OBUNANI TEKSHIRISH ---
+# --- YORDAMCHI FUNKSIYALAR ---
 async def check_sub(user_id):
     for channel in CHANNELS:
         try:
             member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
-            if member.status == "left":
-                return False
-        except:
-            continue
+            if member.status in ["left", "kicked"]: return False
+        except: continue
     return True
 
-# --- ASOSIY MENYU ---
 def main_menu():
     kb = [
         [types.KeyboardButton(text="💎 Olmaz sotib olish")],
@@ -50,91 +49,115 @@ def main_menu():
 @dp.message(Command("start"))
 async def start(message: types.Message):
     user_id = message.from_user.id
-    if user_id not in users_db:
-        users_db[user_id] = 0
-        
-    # Referal tizimi
-    args = message.text.split()
-    if len(args) > 1 and args[1].isdigit():
-        inviter_id = int(args[1])
-        if inviter_id != user_id and user_id not in referrals:
-            referrals[user_id] = inviter_id
-            users_db[inviter_id] = users_db.get(inviter_id, 0) + 1 
-            await bot.send_message(inviter_id, "🔔 Do'stingiz qo'shildi! Sizga +1 TJS berildi.")
-
+    if user_id not in users_db: users_db[user_id] = 0
     if not await check_sub(user_id):
         builder = InlineKeyboardBuilder()
-        builder.row(types.InlineKeyboardButton(text="1-Kanal", url="https://t.me/khidirov_garand1"))
-        builder.row(types.InlineKeyboardButton(text="Akkaunt Savdo", url="https://t.me/freefireakkauntsavdokhidirov"))
-        builder.row(types.InlineKeyboardButton(text="Otziv Kanal", url="https://t.me/khidirovotzif"))
+        builder.row(types.InlineKeyboardButton(text="Obuna bo'lish", url="https://t.me/khidirov_garand1"))
         builder.row(types.InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_subs"))
-        await message.answer("Botdan foydalanish uchun hamma kanallarimizga obuna bo'ling:", reply_markup=builder.as_markup())
+        await message.answer("Botdan foydalanish uchun kanallarga obuna bo'ling:", reply_markup=builder.as_markup())
     else:
-        await message.answer("Xush kelibsiz! Kerakli bo'limni tanlang:", reply_markup=main_menu())
+        await message.answer("Xush kelibsiz!", reply_markup=main_menu())
 
-# --- SOZLAMALAR BO'LIMI (YANGILANGAN) ---
-@dp.message(F.text == "⚙️ Sozlamalar")
-async def settings(message: types.Message):
-    text = (
-        "⚙️ **Bot sozlamalari va ma'lumotlar:**\n\n"
-        "📢 **Asosiy kanal:** @khidirov_garand1\n"
-        "🛒 **Akkaunt savdo:** @freefireakkauntsavdokhidirov\n"
-        "💬 **Otzivlar:** @khidirovotzif\n"
-        "👤 **Asosiy Admin:** @khidirov_garand\n\n"
-        "Barcha xizmatlar kafolatlangan!"
-    )
-    await message.answer(text, disable_web_page_preview=True)
-
-# --- REFERAL ---
-@dp.message(F.text == "👥 Referal")
-async def referral_link(message: types.Message):
-    bot_me = await bot.get_me()
-    link = f"https://t.me/{bot_me.username}?start={message.from_user.id}"
-    await message.answer(f"👥 **Sizning referal silkangiz:**\n\n`{link}`\n\nHar bir taklif uchun 1 TJS balansga qo'shiladi!")
-
-# --- BALANS VA TO'LOV ---
+# --- BALANS TO'LDIRISH (KETMA-KETLIK) ---
 @dp.message(F.text == "💳 Balansni to'ldirish")
-async def payment(message: types.Message):
-    text = (
-        "💰 **To'lov usullari:**\n\n"
-        "🟡 **Alif:** (Karta raqamingizni yozing)\n"
-        "🟢 **Eskhata:** (Karta raqamingizni yozing)\n"
-        "🔵 **Dushanbe City:** (Karta raqamingizni yozing)\n"
-        "💳 **Visa:** (Karta raqamingizni yozing)\n\n"
-        "To'lovni amalga oshirib, chekni (rasmni) shu yerga yuboring!"
-    )
-    await message.answer(text, parse_mode="Markdown")
+async def start_payment(message: types.Message, state: FSMContext):
+    await message.answer("💰 **Qancha to'ldirmoqchisiz?**\n(Summani raqam bilan yozing, masalan: 50)")
+    await state.set_state(FillBalance.waiting_for_amount)
 
-@dp.message(F.photo)
-async def handle_receipt(message: types.Message):
-    await bot.send_photo(ADMIN_ID, message.photo[-1].file_id, 
-                         caption=f"🔔 **Yangi chek keldi!**\n👤 User: @{message.from_user.username}\n🆔 ID: {message.from_user.id}")
+@dp.message(FillBalance.waiting_for_amount)
+async def process_amount(message: types.Message, state: FSMContext):
+    if not message.text.isdigit():
+        await message.answer("Iltimos, faqat raqam yozing!")
+        return
+    
+    await state.update_data(amount=message.text)
+    text = (
+        f"✅ Miqdor: {message.text} TJS\n\n"
+        "💰 **To'lov usullari:**\n"
+        "💳 **Visa:** `4444 8888 1215 6721`\n"
+        "🟢 **Eskhata:** `+992 90 706 12 20`\n"
+        "🔵 **Dushanbe City:** `+992 706 12 20`\n"
+        "🟡 **Alif Mobi:** `+992 90 677 04 62`\n\n"
+        "To'lovni amalga oshirib, **chekni (rasmni) yuboring!**"
+    )
+    await message.answer(text, parse_mode=ParseMode.MARKDOWN)
+    await state.set_state(FillBalance.waiting_for_photo)
+
+@dp.message(FillBalance.waiting_for_photo, F.photo)
+async def handle_receipt(message: types.Message, state: FSMContext):
+    user_data = await state.get_data()
+    amount = user_data['amount']
+    user_id = message.from_user.id
+    username = message.from_user.username or "Noma'lum"
+
+    builder = InlineKeyboardBuilder()
+    builder.row(types.InlineKeyboardButton(text=f"✅ Tasdiqlash ({amount} TJS)", callback_data=f"pay_{amount}_{user_id}"))
+    builder.row(types.InlineKeyboardButton(text="❌ Rad etish", callback_data=f"reject_{user_id}"))
+
+    caption = (
+        f"🔔 **Yangi to'lov cheki!**\n\n"
+        f"👤 Foydalanuvchi: @{username}\n"
+        f"🆔 ID: `{user_id}`\n"
+        f"💰 **To'ldirmoqchi:** {amount} TJS\n"
+        f"💳 Joriy balans: {users_db.get(user_id, 0)} TJS"
+    )
+    
+    await bot.send_photo(ADMIN_ID, message.photo[-1].file_id, caption=caption, reply_markup=builder.as_markup(), parse_mode=ParseMode.MARKDOWN)
     await message.answer("✅ Rahmat! Chek adminga yuborildi. Tasdiqlanishini kuting.")
+    await state.clear()
+
+# --- ADMIN TASDIQLASHI ---
+@dp.callback_query(F.data.startswith("pay_"))
+async def approve_payment(callback: types.CallbackQuery):
+    data = callback.data.split("_")
+    amount = int(data[1])
+    user_id = int(data[2])
+    
+    users_db[user_id] = users_db.get(user_id, 0) + amount
+    await bot.send_message(user_id, f"✅ To'lovingiz tasdiqlandi! Balansingizga {amount} TJS qo'shildi.")
+    await callback.message.edit_caption(caption=callback.message.caption + f"\n\n✅ **TASDIQLANDI (+{amount} TJS)**")
+    await callback.answer("Tasdiqlandi")
+
+@dp.callback_query(F.data.startswith("reject_"))
+async def reject_payment(callback: types.CallbackQuery):
+    user_id = int(callback.data.split("_")[1])
+    await bot.send_message(user_id, "❌ To'lovingiz bekor qilindi.")
+    await callback.message.edit_caption(caption=callback.message.caption + "\n\n❌ **RAD ETILDI**")
+    await callback.answer("Rad etildi")
 
 # --- OLMAZ SOTIB OLISH ---
 @dp.message(F.text == "💎 Olmaz sotib olish")
 async def shop(message: types.Message):
-    text = "💎 **Olmoslar va narxlar:**\n\n"
-    for k, v in PRICES.items():
-        text += f"🔹 {k} — {v} TJS\n"
-    
+    builder = InlineKeyboardBuilder()
+    for name, price in PRICES.items():
+        builder.row(types.InlineKeyboardButton(text=f"{name} - {price} TJS", callback_data=f"buy_{price}_{name}"))
     bal = users_db.get(message.from_user.id, 0)
-    text += f"\n💰 Sizning balansingiz: {bal} TJS"
-    if bal <= 0:
-        text += "\n⚠️ Sotib olish uchun balans yetarli emas!"
-    await message.answer(text)
+    await message.answer(f"💎 **Paketni tanlang:**\n💰 Balansingiz: {bal} TJS", reply_markup=builder.as_markup())
+
+@dp.callback_query(F.data.startswith("buy_"))
+async def buy_product(callback: types.CallbackQuery):
+    data = callback.data.split("_")
+    price, item_name, user_id = int(data[1]), data[2], callback.from_user.id
+    if users_db.get(user_id, 0) >= price:
+        users_db[user_id] -= price
+        order_text = (f"🛒 **Yangi buyurtma!**\n\n👤 @{callback.from_user.username}\n🆔 `{user_id}`\n📦 Paket: **{item_name}**\n💰 Qolgan balans: {users_db[user_id]} TJS")
+        await bot.send_message(ADMIN_ID, order_text, parse_mode=ParseMode.MARKDOWN)
+        await callback.message.answer(f"✅ Xarid qilindi: **{item_name}**.")
+    else:
+        await callback.answer("❌ Mablag' yetarli emas!", show_alert=True)
+
+# --- QOLGAN FUNKSIYALAR ---
+@dp.message(F.text == "💰 Balans")
+async def show_balance(message: types.Message):
+    await message.answer(f"💰 Balansingiz: {users_db.get(message.from_user.id, 0)} TJS")
 
 @dp.callback_query(F.data == "check_subs")
 async def check_callback(callback: types.CallbackQuery):
     if await check_sub(callback.from_user.id):
-        await callback.message.answer("Tabriklaymiz! Obuna tasdiqlandi.", reply_markup=main_menu())
-        await callback.answer()
+        await callback.message.answer("Obuna tasdiqlandi.", reply_markup=main_menu())
     else:
-        await callback.answer("Hamma kanallarga a'zo bo'lishingiz shart!", show_alert=True)
+        await callback.answer("Hali obuna bo'lmagansiz!", show_alert=True)
 
-async def main():
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
+async def main(): await dp.start_polling(bot)
+if __name__ == "__main__": asyncio.run(main())
     
