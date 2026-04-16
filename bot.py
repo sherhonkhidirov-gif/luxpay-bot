@@ -7,7 +7,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 
 # --- SOZLAMALAR ---
-TOKEN = '8642617336:AAEtQc8o0YEqKRH7Rt...' 
+TOKEN = '8642617336:AAEtQc8o0YEqKRH7Rt8vedsP9G08dv4p0FY' 
 ADMIN_ID = 8642617336 
 
 CHANNELS = ["@khidirov_garand1", "@freefireakkauntsavdokhidirov", "@khidirovotzif"] 
