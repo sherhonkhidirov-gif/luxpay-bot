@@ -1,3 +1,4 @@
+import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -154,10 +155,10 @@ async def check_callback(callback: types.CallbackQuery):
         await callback.message.answer("Obuna tasdiqlandi.", reply_markup=main_menu())
     else:
         await callback.answer("Hali obuna bo'lmagansiz!", show_alert=True)
-
-async def main():
+        async def main():    
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
+    asyncio.run(main())    
+    
