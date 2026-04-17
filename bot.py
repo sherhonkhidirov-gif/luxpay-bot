@@ -155,6 +155,10 @@ async def check_callback(callback: types.CallbackQuery):
     else:
         await callback.answer("Hali obuna bo'lmagansiz!", show_alert=True)
 
-async def main(): await dp.start_polling(bot)
-if __name__ == "__main__": asyncio.run(main())
+    async def main():
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
     
