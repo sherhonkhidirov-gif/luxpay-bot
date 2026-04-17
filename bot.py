@@ -20,8 +20,7 @@ users_db = {}
 class FillBalance(StatesGroup):
     waiting_for_amount = State()
     waiting_for_photo = State()
-
-bot = Bot(token=TOKEN)
+    
 dp = Dispatcher()
 
 PRICES = {
