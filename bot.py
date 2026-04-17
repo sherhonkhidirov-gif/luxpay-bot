@@ -5,10 +5,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 
-# --- SOZLAMALAR ---"
+# --- SOZLAMALAR --- 
 API_TOKEN = "8642617336:AAEtQc8o0YEqKRH7Rt8vedsP9G08dv4p0FY"
-bot = Bot(token=TOKEN)
-dp = Dispatcher()
 ADMIN_ID = 8642617336 
 
 CHANNELS = ["@khidirov_garand1", "@freefireakkauntsavdokhidirov", "@khidirovotzif"] 
@@ -20,9 +18,8 @@ users_db = {}
 class FillBalance(StatesGroup):
     waiting_for_amount = State()
     waiting_for_photo = State()
-    
-dp = Dispatcher()
-
+    bot = Bot(token=API_TOKEN)
+    dp = Dispatcher() 
 PRICES = {
     "💎 100+10": 10, "💎 310": 30, "💎 520": 55, "💎 1060": 106,
     "💎 2180": 220, "💎 5600": 550, "📅 Haftalik": 20, "🌕 Oylik": 100,
