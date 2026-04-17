@@ -1,4 +1,3 @@
-from aiogram import Bot, Dispatcher
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -6,9 +5,10 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.enums import ParseMode
 
-# --- SOZLAMALAR ---
+# --- SOZLAMALAR ---"
 API_TOKEN = "8642617336:AAEtQc8o0YEqKRH7Rt8vedsP9G08dv4p0FY"
-
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher()
 ADMIN_ID = 8642617336 
 
 CHANNELS = ["@khidirov_garand1", "@freefireakkauntsavdokhidirov", "@khidirovotzif"] 
