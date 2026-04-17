@@ -7,7 +7,7 @@ from aiogram.enums import ParseMode
 
 # --- SOZLAMALAR ---"
 API_TOKEN = "8642617336:AAEtQc8o0YEqKRH7Rt8vedsP9G08dv4p0FY"
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=TOKEN)
 dp = Dispatcher()
 ADMIN_ID = 8642617336 
 
