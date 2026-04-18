@@ -91,8 +91,10 @@ async def pay_photo(message: types.Message, state: FSMContext):
     user = message.from_user
     
     builder = InlineKeyboardBuilder()
-    builder.row(types.InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"accept_{data['amount']}_{user.id}"))
-    builder.row(types.InlineKeyboardButton(text="❌ Rad etish", callback_data=f"deny_{user.id}")
+    builder.row(
+        types.InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"accept_{am}_{uid}"),
+        types.InlineKeyboardButton(text="❌ Rad etish", callback_data=f"deny_{user.id}")
+    )
                     # Adminga boradigan xabar
         caption = (
         f"🔔 **YANGI TO'LOV!**\n\n"
