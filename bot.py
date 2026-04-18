@@ -57,7 +57,7 @@ async def send_sub_message(message: types.Message):
     builder.row(types.InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_subs"))
     await message.answer("Botdan foydalanish uchun barcha kanallarga obuna bo'ling:", reply_markup=builder.as_markup())
 
-# --- HANDLERS ---
+# --- ASOSIY HANDLERLAR ---
 
 @dp.message(Command("start"))
 async def start(message: types.Message):
@@ -135,15 +135,18 @@ async def pay_photo(message: types.Message, state: FSMContext):
 @dp.callback_query(F.data.startswith("accept_"))
 async def admin_accept(callback: types.CallbackQuery):
     data_parts = callback.data.split("_")
-    am, uid = int(data_parts[1]), int(data_parts[2])
+    am = int(data_parts[1])
+    uid = int(data_parts[2])
     
-    if uid not in users_db: users_db[uid] = {'balance': 0}
+    if uid not in users_db: 
+        users_db[uid] = {'balance': 0}
+    
     users_db[uid]['balance'] += am
     
     try:
         await bot.send_message(uid, f"✅ To'lovingiz tasdiqlandi!\n💰 Balansingizga **{am} TJS** qo'shildi.")
         await callback.message.edit_caption(caption=callback.message.caption + "\n\n✅ **TASDIQLANDI**")
-    except:
+    except Exception:
         pass
     await callback.answer("Muvaffaqiyatli tasdiqlandi")
 
@@ -153,7 +156,7 @@ async def admin_deny(callback: types.CallbackQuery):
     try:
         await bot.send_message(uid, "❌ To'lovingiz rad etildi. Chekda xatolik bo'lishi mumkin.")
         await callback.message.edit_caption(caption=callback.message.caption + "\n\n❌ **RAD ETILDI**")
-    except:
+    except Exception:
         pass
     await callback.answer("Rad etildi")
 
@@ -187,7 +190,7 @@ async def buy_process(callback: types.CallbackQuery):
     else:
         await callback.answer("❌ Balansda mablag' yetarli emas!", show_alert=True)
 
-# --- BOSHQA TUGMALAR ---
+# --- QOLGAN TUGMALAR ---
 @dp.message(F.text == "💰 Balans")
 async def show_bal(message: types.Message):
     b = users_db.get(message.from_user.id, {'balance': 0})['balance']
@@ -200,8 +203,8 @@ async def settings(message: types.Message):
     builder.row(types.InlineKeyboardButton(text="👨‍💻 Admin", url=f"https://t.me/{ADMIN_USERNAME[1:]}"))
     await message.answer("⚙️ **Sozlamalar:**", reply_markup=builder.as_markup())
 
+# --- RUN ---
 async def main():
-    # Dublikat xabarlar oldini olish uchun webhookni tozalash
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
@@ -210,4 +213,3 @@ if __name__ == "__main__":
         asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
         pass
-    
