@@ -8,19 +8,22 @@ from aiogram.enums import ParseMode
 
 # --- SOZLAMALAR --- 
 API_TOKEN = "8642617336:AAEtQc8o0YEqKRH7Rt8vedsP9G08dv4p0FY"
-ADMIN_ID = 8642617336 
+ADMIN_ID = 8642617336 # O'zingizning Telegram ID raqamingizni yozing
 
 CHANNELS = ["@khidirov_garand1", "@freefireakkauntsavdokhidirov", "@khidirovotzif"] 
 
-# Ma'lumotlar bazasi
+# Ma'lumotlar bazasi (Vaqtincha)
 users_db = {} 
 
-# FSM - Holatlarni boshqarish (summa va chekni ketma-ket so'rash uchun)
+# Bot va Dispatcher obyektlarini yaratamiz
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher()
+
+# FSM - Holatlarni boshqarish
 class FillBalance(StatesGroup):
     waiting_for_amount = State()
     waiting_for_photo = State()
-    bot = Bot(token=API_TOKEN)
-    dp = Dispatcher() 
+
 PRICES = {
     "💎 100+10": 10, "💎 310": 30, "💎 520": 55, "💎 1060": 106,
     "💎 2180": 220, "💎 5600": 550, "📅 Haftalik": 20, "🌕 Oylik": 100,
@@ -32,8 +35,10 @@ async def check_sub(user_id):
     for channel in CHANNELS:
         try:
             member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
-            if member.status in ["left", "kicked"]: return False
-        except: continue
+            if member.status in ["left", "kicked"]: 
+                return False
+        except Exception: 
+            continue
     return True
 
 def main_menu():
@@ -47,16 +52,19 @@ def main_menu():
 @dp.message(Command("start"))
 async def start(message: types.Message):
     user_id = message.from_user.id
-    if user_id not in users_db: users_db[user_id] = 0
+    if user_id not in users_db: 
+        users_db[user_id] = 0
+    
     if not await check_sub(user_id):
         builder = InlineKeyboardBuilder()
-        builder.row(types.InlineKeyboardButton(text="Obuna bo'lish", url="https://t.me/khidirov_garand1"))
+        builder.row(types.InlineKeyboardButton(text="1-kanalga obuna", url="https://t.me/khidirov_garand1"))
+        builder.row(types.InlineKeyboardButton(text="2-kanalga obuna", url="https://t.me/freefireakkauntsavdokhidirov"))
         builder.row(types.InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_subs"))
         await message.answer("Botdan foydalanish uchun kanallarga obuna bo'ling:", reply_markup=builder.as_markup())
     else:
         await message.answer("Xush kelibsiz!", reply_markup=main_menu())
 
-# --- BALANS TO'LDIRISH (KETMA-KETLIK) ---
+# --- BALANS TO'LDIRISH ---
 @dp.message(F.text == "💳 Balansni to'ldirish")
 async def start_payment(message: types.Message, state: FSMContext):
     await message.answer("💰 **Qancha to'ldirmoqchisiz?**\n(Summani raqam bilan yozing, masalan: 50)")
@@ -89,15 +97,14 @@ async def handle_receipt(message: types.Message, state: FSMContext):
     username = message.from_user.username or "Noma'lum"
 
     builder = InlineKeyboardBuilder()
-    builder.row(types.InlineKeyboardButton(text=f"✅ Tasdiqlash ({amount} TJS)", callback_data=f"pay_{amount}_{user_id}"))
+    builder.row(types.InlineKeyboardButton(text=f"✅ Tasdiqlash", callback_data=f"pay_{amount}_{user_id}"))
     builder.row(types.InlineKeyboardButton(text="❌ Rad etish", callback_data=f"reject_{user_id}"))
 
     caption = (
         f"🔔 **Yangi to'lov cheki!**\n\n"
         f"👤 Foydalanuvchi: @{username}\n"
         f"🆔 ID: `{user_id}`\n"
-        f"💰 **To'ldirmoqchi:** {amount} TJS\n"
-        f"💳 Joriy balans: {users_db.get(user_id, 0)} TJS"
+        f"💰 **To'ldirmoqchi:** {amount} TJS"
     )
     
     await bot.send_photo(ADMIN_ID, message.photo[-1].file_id, caption=caption, reply_markup=builder.as_markup(), parse_mode=ParseMode.MARKDOWN)
@@ -129,13 +136,17 @@ async def shop(message: types.Message):
     builder = InlineKeyboardBuilder()
     for name, price in PRICES.items():
         builder.row(types.InlineKeyboardButton(text=f"{name} - {price} TJS", callback_data=f"buy_{price}_{name}"))
+    
     bal = users_db.get(message.from_user.id, 0)
     await message.answer(f"💎 **Paketni tanlang:**\n💰 Balansingiz: {bal} TJS", reply_markup=builder.as_markup())
 
 @dp.callback_query(F.data.startswith("buy_"))
 async def buy_product(callback: types.CallbackQuery):
     data = callback.data.split("_")
-    price, item_name, user_id = int(data[1]), data[2], callback.from_user.id
+    price = int(data[1])
+    item_name = data[2]
+    user_id = callback.from_user.id
+    
     if users_db.get(user_id, 0) >= price:
         users_db[user_id] -= price
         order_text = (f"🛒 **Yangi buyurtma!**\n\n👤 @{callback.from_user.username}\n🆔 `{user_id}`\n📦 Paket: **{item_name}**\n💰 Qolgan balans: {users_db[user_id]} TJS")
@@ -155,10 +166,11 @@ async def check_callback(callback: types.CallbackQuery):
         await callback.message.answer("Obuna tasdiqlandi.", reply_markup=main_menu())
     else:
         await callback.answer("Hali obuna bo'lmagansiz!", show_alert=True)
-        async def main():    
+
+async def main():
+    print("Bot ishga tushdi...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())    
-    
+    asyncio.run(main())
+        
