@@ -9,9 +9,10 @@ from aiogram.enums import ParseMode
 
 # --- SOZLAMALAR --- 
 API_TOKEN = "8642617336:AAEtQc8o0YEqKRH7Rt8vedsP9G08dv4p0FY"
-ADMIN_ID = 8642617336  # O'z ID-ingizni tekshiring
+ADMIN_ID = 8642617336 
 ADMIN_USERNAME = "@khidirov_garand"
 
+# Kanallar ro'yxati (Barcha kanallarda bot ADMIN bo'lishi shart!)
 CHANNELS = ["@khidirov_garand1", "@freefireakkauntsavdokhidirov", "@khidirovotzif"] 
 users_db = {} 
 
@@ -31,11 +32,14 @@ class FillBalance(StatesGroup):
 
 # --- YORDAMCHI FUNKSIYALAR ---
 async def check_sub(user_id):
+    """Barcha kanallarga obunani tekshirish"""
     for channel in CHANNELS:
         try:
             member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
-            if member.status in ["left", "kicked"]: return False
-        except: return False
+            if member.status in ["left", "kicked"]: 
+                return False
+        except Exception: 
+                return False
     return True
 
 def main_menu():
@@ -45,7 +49,20 @@ def main_menu():
     builder.row(types.KeyboardButton(text="⚙️ Sozlamalar"), types.KeyboardButton(text="💳 Balansni to'ldirish"))
     return builder.as_markup(resize_keyboard=True)
 
-# --- START ---
+async def send_sub_message(message: types.Message):
+    """Obuna bo'lmaganlarga xabar yuborish"""
+    builder = InlineKeyboardBuilder()
+    # Har bir kanal uchun tugma yaratish
+    for channel in CHANNELS:
+        builder.row(types.InlineKeyboardButton(text=f"Obuna bo'lish {channel}", url=f"https://t.me/{channel[1:]}"))
+    
+    # Tekshirish tugmasi
+    builder.row(types.InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_subs"))
+    
+    await message.answer("Botdan foydalanish uchun barcha kanallarga obuna bo'ling:", reply_markup=builder.as_markup())
+
+# --- HANDLERS ---
+
 @dp.message(Command("start"))
 async def start(message: types.Message):
     user_id = message.from_user.id
@@ -53,16 +70,24 @@ async def start(message: types.Message):
         users_db[user_id] = {'balance': 0}
     
     if not await check_sub(user_id):
-        builder = InlineKeyboardBuilder()
-        builder.row(types.InlineKeyboardButton(text="Obuna bo'lish", url="https://t.me/khidirov_garand1"))
-        builder.row(types.InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_subs"))
-        await message.answer("Botdan foydalanish uchun kanallarga obuna bo'ling:", reply_markup=builder.as_markup())
+        await send_sub_message(message)
     else:
         await message.answer("Xush kelibsiz!", reply_markup=main_menu())
+
+@dp.callback_query(F.data == "check_subs")
+async def check_callback(callback: types.CallbackQuery):
+    if await check_sub(callback.from_user.id):
+        await callback.message.delete()
+        await callback.message.answer("Tabriklaymiz! Barcha kanallarga obuna bo'ldingiz.", reply_markup=main_menu())
+    else:
+        await callback.answer("❌ Hali hamma kanallarga obuna bo'lmagansiz!", show_alert=True)
 
 # --- BALANS TO'LDIRISH ---
 @dp.message(F.text == "💳 Balansni to'ldirish")
 async def pay_start(message: types.Message, state: FSMContext):
+    if not await check_sub(message.from_user.id):
+        return await send_sub_message(message)
+        
     builder = InlineKeyboardBuilder()
     builder.row(types.InlineKeyboardButton(text="Visa", callback_data="m_Visa"), types.InlineKeyboardButton(text="Alif", callback_data="m_Alif"))
     builder.row(types.InlineKeyboardButton(text="Eskhata", callback_data="m_Eskhata"), types.InlineKeyboardButton(text="DC", callback_data="m_DC"))
@@ -92,7 +117,6 @@ async def pay_photo(message: types.Message, state: FSMContext):
     data = await state.get_data()
     user = message.from_user
     
-    # Adminga boradigan tugmalar
     builder = InlineKeyboardBuilder()
     builder.row(
         types.InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"accept_{data['amount']}_{user.id}"),
@@ -115,8 +139,7 @@ async def pay_photo(message: types.Message, state: FSMContext):
 @dp.callback_query(F.data.startswith("accept_"))
 async def admin_accept(callback: types.CallbackQuery):
     _, am, uid = callback.data.split("_")
-    uid = int(uid)
-    am = int(am)
+    uid, am = int(uid), int(am)
     
     if uid not in users_db: users_db[uid] = {'balance': 0}
     users_db[uid]['balance'] += am
@@ -142,7 +165,9 @@ async def admin_deny(callback: types.CallbackQuery):
 # --- OLMAZ XARID QILISH ---
 @dp.message(F.text == "💎 Olmaz sotib olish")
 async def shop_menu(message: types.Message):
-    if not await check_sub(message.from_user.id): return
+    if not await check_sub(message.from_user.id): 
+        return await send_sub_message(message)
+        
     builder = InlineKeyboardBuilder()
     for n, p in PRICES.items():
         builder.row(types.InlineKeyboardButton(text=f"{n} - {p} TJS", callback_data=f"buy_{p}_{n}"))
@@ -151,9 +176,7 @@ async def shop_menu(message: types.Message):
 @dp.callback_query(F.data.startswith("buy_"))
 async def buy_process(callback: types.CallbackQuery):
     data_parts = callback.data.split("_")
-    p = int(data_parts[1])
-    n = data_parts[2]
-    uid = callback.from_user.id
+    p, n, uid = int(data_parts[1]), data_parts[2], callback.from_user.id
     
     if users_db.get(uid, {'balance':0})['balance'] >= p:
         users_db[uid]['balance'] -= p
@@ -183,7 +206,6 @@ async def settings(message: types.Message):
     await message.answer("⚙️ **Sozlamalar:**", reply_markup=builder.as_markup())
 
 async def main():
-    # Render uchun eski yangilanishlarni tozalash (dublikat xabarlar oldini oladi)
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
