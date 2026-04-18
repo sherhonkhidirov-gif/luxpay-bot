@@ -10,7 +10,8 @@
         .header { text-align: center; color: #f39c12; margin-bottom: 20px; }
         .section-title { border-left: 4px solid #f39c12; padding-left: 10px; margin: 20px 0 10px; font-size: 18px; color: #f39c12; }
         .card { background: #1e1e1e; border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .price { color: #00d2ff; font-weight: bold; }
+        .info h4 { margin: 0; font-size: 16px; color: #fff; }
+        .price { color: #00d2ff; font-weight: bold; margin-top: 5px; }
         .buy-btn { background: #f39c12; border: none; color: black; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .pay-card { background: #252525; border: 1px dashed #555; border-radius: 10px; padding: 10px; margin-bottom: 8px; font-size: 14px; line-height: 1.6; }
     </style>
@@ -25,31 +26,44 @@
         <b>Eskhata / DC:</b> +992 90 706 12 20
     </div>
 
-    <div class="section-title">📦 Mahsulotlar (TJS)</div>
+    <div class="section-title">📦 Barcha Olmazlar</div>
     <div id="shop"></div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+
+        // BARCHA MAHSULOTLAR RO'YXATI
         const products = [
-            {name: "💎 100+10", price: 10}, {name: "💎 310", price: 30},
-            {name: "💎 520", price: 55}, {name: "💎 1060", price: 106},
-            {name: "💎 2180", price: 220}, {name: "💎 5600", price: 550},
-            {name: "📅 Haftalik", price: 20}, {name: "🌕 Oylik", price: 110},
-            {name: "📈 Level Up", price: 30}, {name: "🎟 Booyah Pass", price: 30}
+            {name: "💎 100+10 Olmos", price: 10},
+            {name: "💎 310 Olmos", price: 30},
+            {name: "💎 520 Olmos", price: 55},
+            {name: "💎 1060 Olmos", price: 106},
+            {name: "💎 2180 Olmos", price: 220},
+            {name: "💎 5600 Olmos", price: 550},
+            {name: "📅 Haftalik Vaucher", price: 20},
+            {name: "🌕 Oylik Vaucher", price: 110},
+            {name: "☀️ Kunlik Paket", price: 5},
+            {name: "📈 Level Up Pass", price: 30},
+            {name: "🎟 Booyah Pass", price: 30}
         ];
+
         const shop = document.getElementById('shop');
         products.forEach(p => {
-            shop.innerHTML += `<div class="card">
-                <div><h4>${p.name}</h4><div class="price">${p.price} TJS</div></div>
-                <button class="buy-btn" onclick="buy('${p.name}', ${p.price})">Tanlash</button>
-            </div>`;
+            shop.innerHTML += `
+                <div class="card">
+                    <div class="info">
+                        <h4>${p.name}</h4>
+                        <div class="price">${p.price} TJS</div>
+                    </div>
+                    <button class="buy-btn" onclick="buy('${p.name}', ${p.price})">Tanlash</button>
+                </div>`;
         });
+
         function buy(n, p) {
             tg.sendData(JSON.stringify({item: n, cost: p}));
             tg.close();
         }
     </script>
 </body>
-  </html>
-  
+</html>
