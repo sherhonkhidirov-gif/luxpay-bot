@@ -95,8 +95,8 @@ async def pay_photo(message: types.Message, state: FSMContext):
         types.InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"accept_{am}_{uid}"),
         types.InlineKeyboardButton(text="❌ Rad etish", callback_data=f"deny_{user.id}")
     )
-                    # Adminga boradigan xabar
-        caption = (
+                   # Mana shu qatorlar boshidagi bo'sh joy (probel) bir xil bo'lishi shart
+    caption = (
         f"🔔 **YANGI TO'LOV!**\n\n"
         f"👤 User: @{user.username or 'Nomalum'}\n"
         f"🆔 ID: `{user.id}`\n"
