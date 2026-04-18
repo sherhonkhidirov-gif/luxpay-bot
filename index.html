@@ -2,67 +2,186 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Khidirov Shop - OP's Pay Style</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Khidirov Shop - Professional</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Asosiy uslublar */
-        body { font-family: 'Helvetica Neue', sans-serif; background: #0c0d10; color: white; padding: 10px; margin: 0; }
-        .header { text-align: center; color: #fff; margin: 15px 0 25px; font-weight: bold; }
-        .header-title { font-size: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        /* Asosiy uslublar - OPSPAY kabi oq/sariq */
+        :root { --main-color: #fca311; --bg-color: #f4f4f9; --text-color: #333; --card-bg: #fff; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; padding-bottom: 70px; user-select: none; }
+        
+        /* Tepasi */
+        .header { background: #fff; padding: 15px; text-align: center; font-weight: bold; font-size: 18px; border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; z-index: 100; }
+        .header span { color: var(--main-color); }
 
-        /* To'lov rekvizitlari */
-        .rekvizit-panel { background: #161a20; border-radius: 12px; padding: 15px; margin-bottom: 25px; border: 1px solid #2a2a2a; }
-        .rekvizit-title { color: #8e8e93; font-size: 13px; text-transform: uppercase; margin-bottom: 10px; font-weight: bold; }
-        .rekvizit-item { font-size: 14px; color: #fff; line-height: 1.8; border-bottom: 1px solid #2a2a2a; padding: 5px 0; }
-        .rekvizit-item b { color: #f39c12; }
+        /* Sahifalar boshqaruvi */
+        .page { display: none; padding: 15px; }
+        .active-page { display: block; }
 
-        /* Bo'lim sarlavhasi */
-        .section-title { font-size: 16px; color: #fff; margin: 0 0 15px 5px; font-weight: bold; }
+        /* Bosh sahifa va Barcha o'yinlar gridlari */
+        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
+        
+        /* O'yin kartochkalari */
+        .game-card { background: var(--card-bg); border-radius: 12px; padding: 10px; text-align: center; border: 1px solid #e0e0e0; cursor: pointer; }
+        .game-card img { width: 60px; height: 60px; border-radius: 10px; margin-bottom: 8px; object-fit: cover; }
+        .game-card .title { font-size: 14px; font-weight: 500; margin-bottom: 10px; }
+        .game-card .btn { background: var(--main-color); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; width: 100%; }
 
-        /* Kafel ko'rinishi (GRID) */
-        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding-bottom: 20px; }
+        /* Free Fire Top Up Grid */
+        .diamond-card { background: var(--card-bg); border-radius: 12px; border: 2px solid transparent; padding: 15px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
+        .diamond-card.selected { border-color: var(--main-color); background: #fffcf0; }
+        .diamond-card img { width: 50px; margin-bottom: 10px; }
+        .diamond-card .name { font-size: 15px; font-weight: bold; margin-bottom: 5px; }
+        .diamond-card .price { color: #009688; font-weight: bold; font-size: 14px; margin-bottom: 10px; }
+        .diamond-card .btn-buy { background: var(--main-color); color: #fff; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; font-size: 13px; }
 
-        /* Mahsulot kafellari */
-        .grid-item { background: #161a20; border-radius: 12px; border: 1px solid #2a2a2a; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
-        .grid-item:hover { border-color: #f39c12; }
+        /* Hisobni to'ldirish */
+        .rekvizit-card { background: #fff; border-radius: 12px; padding: 15px; border: 1px solid #e0e0e0; margin-bottom: 15px; display: flex; align-items: center; cursor: pointer; }
+        .rekvizit-card:hover { background: #fafafa; }
+        .rekvizit-card .icon { font-size: 24px; margin-right: 15px; color: var(--main-color); }
+        .rekvizit-card .info { flex-grow: 1; }
+        .rekvizit-card .card-name { font-weight: bold; font-size: 16px; margin-bottom: 3px; }
+        .rekvizit-card .card-num { color: #666; font-size: 14px; font-family: monospace; }
+        
+        .screenshot-info { background: #e0f7fa; color: #006064; padding: 10px; border-radius: 8px; font-size: 14px; text-align: center; margin-top: 20px; border: 1px solid #b2ebf2; }
 
-        /* Olmos ikonkasi (fon sifatida) */
-        .grid-item::before { content: '💎'; position: absolute; font-size: 50px; opacity: 0.05; top: 0; left: -10px; }
-
-        /* Mahsulot nomi va miqdori */
-        .item-name { font-size: 15px; font-weight: bold; color: #fff; margin-bottom: 15px; }
-
-        /* Narx va Tanlash tugmasi jami */
-        .item-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid #2a2a2a; padding-top: 10px; }
-
-        /* Narx */
-        .item-price { font-size: 14px; font-weight: bold; color: #00d2ff; }
-
-        /* Tanlash tugmasi (pastroqda) */
-        .choose-btn { background: #f39c12; border: none; color: black; padding: 7px 15px; border-radius: 7px; font-size: 12px; font-weight: bold; }
+        /* Pastki Menyular */
+        .footer-menu { position: fixed; bottom: 0; left: 0; width: 100%; background: #fff; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-around; padding: 10px 0; z-index: 100; }
+        .menu-item { text-align: center; color: #777; flex: 1; cursor: pointer; font-size: 11px; }
+        .menu-item.active { color: var(--main-color); font-weight: bold; }
+        .menu-item .icon { font-size: 20px; margin-bottom: 3px; }
+        
+        /* Ikonkalar (font sifatida) */
+        @font-face { font-family: 'Material Icons'; font-style: normal; font-weight: 400; src: url(https://fonts.gstatic.com/s/materialicons/v140/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2) format('woff2'); }
+        .material-icons { font-family: 'Material Icons'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased; }
 
     </style>
 </head>
 <body>
-    <div class="header"><div class="header-title">Khidirov Shop</div></div>
 
-    <div class="rekvizit-panel">
-        <div class="rekvizit-title">💳 To'lov rekvizitlari</div>
-        <div class="rekvizit-item"><b>Visa:</b> 4444 8888 1215 6721</div>
-        <div class="rekvizit-item"><b>Alif:</b> +992 90 677 04 62</div>
-        <div class="rekvizit-item"><b>Eskhata / DC:</b> +992 90 706 12 20</div>
+    <div class="header">Khidirov<span>Shop</span></div>
+
+    <div id="page-home" class="page active-page">
+        <h3>Xush kelibsiz!</h3>
+        <p>Arzon va ishonchli o'yin xizmatlari.</p>
+        <div class="grid-container">
+            <div class="game-card" onclick="showDiamonds()">
+                <img src="https://img.icons8.com/fluency/96/free-fire.png" alt="FF">
+                <div class="title">Free Fire</div>
+                <button class="btn">Ko'proq</button>
+            </div>
+            <div class="game-card">
+                <img src="https://img.icons8.com/fluency/96/pubg-mobile.png" alt="PUBG">
+                <div class="title">PUBG Mobile</div>
+                <button class="btn">Ko'proq</button>
+            </div>
+        </div>
     </div>
 
-    <div class="section-title">📦 Barcha Olmazlar</div>
-    <div id="shop" class="grid-container"></div>
+    <div id="page-ff" class="page">
+        <div style="display:flex; align-items:center; margin-bottom:15px;">
+            <button onclick="showPage('page-games')" style="background:none; border:none; color:var(--main-color); cursor:pointer; font-size:18px;">&larr;</button>
+            <h3 style="margin:0 0 0 10px;">Free Fire Top Up</h3>
+        </div>
+        <div id="diamond-grid" class="grid-container"></div>
+    </div>
+
+    <div id="page-topup" class="page">
+        <h3>Hisobni to'ldirish</h3>
+        <p>To'lovni amalga oshirish uchun kartani tanlang:</p>
+        
+        <div class="rekvizit-card" onclick="copyCard('4444888812156721')">
+            <span class="material-icons icon">credit_card</span>
+            <div class="info">
+                <div class="card-name">Visa Card (TJS)</div>
+                <div class="card-num">4444 8888 1215 6721</div>
+            </div>
+        </div>
+
+        <div class="rekvizit-card" onclick="copyCard('+992906770462')">
+            <span class="material-icons icon">account_balance_wallet</span>
+            <div class="info">
+                <div class="card-name">Alif (TJS)</div>
+                <div class="card-num">+992 90 677 04 62</div>
+            </div>
+        </div>
+
+        <div class="rekvizit-card" onclick="copyCard('+992907061220')">
+            <span class="material-icons icon">payments</span>
+            <div class="info">
+                <div class="card-name">Eskhata / DC (TJS)</div>
+                <div class="card-num">+992 90 706 12 20</div>
+            </div>
+        </div>
+
+        <div class="rekvizit-card" onclick="showScreenshotInfo()">
+            <span class="material-icons icon">photo_camera</span>
+            <div class="info">
+                <div class="card-name">Skrinshot orqali to'lov</div>
+                <div class="card-num">To'lovni tasdiqlash</div>
+            </div>
+        </div>
+        
+        <div id="screenshot-box" class="screenshot-info" style="display:none;">
+            To'lovni amalga oshirgach, chek skrinshotini botga yuboring!
+        </div>
+    </div>
+
+    <div id="page-games" class="page">
+        <h3>Barcha O'yinlar</h3>
+        <div class="grid-container">
+            <div class="game-card" onclick="showDiamonds()">
+                <img src="https://img.icons8.com/fluency/96/free-fire.png" alt="FF">
+                <div class="title">Free Fire</div>
+                <button class="btn">Kirish</button>
+            </div>
+            </div>
+    </div>
+
+    <div id="page-profile" class="page">
+        <h3>Profil</h3>
+        <p>ID: Khidirov Garand</p>
+    </div>
+
+
+    <div class="footer-menu">
+        <div class="menu-item active" onclick="showPage('page-home', this)">
+            <span class="material-icons icon">home</span>
+            <div>Bosh sahifa</div>
+        </div>
+        <div class="menu-item" onclick="showPage('page-games', this)">
+            <span class="material-icons icon">sports_esports</span>
+            <div>O'yinlar</div>
+        </div>
+        <div class="menu-item" onclick="showPage('page-topup', this)">
+            <span class="material-icons icon">account_balance_wallet</span>
+            <div>Hisobni to'ldirish</div>
+        </div>
+        <div class="menu-item" onclick="showPage('page-profile', this)">
+            <span class="material-icons icon">person</span>
+            <div>Profil</div>
+        </div>
+    </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+        tg.ready();
 
-        // BARCHA MAHSULOTLAR RO'YXATI
-        const products = [
+        // SAHIFALARNI BOSHQARISH
+        function showPage(pageId, menuItem) {
+            // Hamma sahifalarni yopish
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+            // Tanlanganni ochish
+            document.getElementById(pageId).classList.add('active-page');
+            
+            // Menyuni yangilash
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            if(menuItem) menuItem.classList.add('active');
+        }
+
+        // FF ALMAZLARINI GRIDGA CHIQARISH
+        const diamonds = [
             {name: "100+10 Olmos", price: 10},
             {name: "310 Olmos", price: 30},
             {name: "520 Olmos", price: 55},
@@ -76,22 +195,46 @@
             {name: "Booyah Pass", price: 30}
         ];
 
-        const shop = document.getElementById('shop');
-        products.forEach(p => {
-            shop.innerHTML += `
-                <div class="grid-item" onclick="buy('${p.name}', ${p.price})">
-                    <div class="item-name">${p.name}</div>
-                    <div class="item-footer">
-                        <div class="item-price">${p.price} TJS</div>
-                        <button class="choose-btn">Tanlash</button>
-                    </div>
+        const diamondGrid = document.getElementById('diamond-grid');
+        diamonds.forEach(d => {
+            diamondGrid.innerHTML += `
+                <div class="diamond-card" onclick="selectDiamond(this, '${d.name}', ${d.price})">
+                    <img src="https://img.icons8.com/emoji/96/diamond-emoji.png" alt="💎">
+                    <div class="name">${d.name}</div>
+                    <div class="price">${d.price} TJS</div>
+                    <button class="btn-buy">Sotib olish</button>
                 </div>`;
         });
 
-        function buy(n, p) {
-            tg.sendData(JSON.stringify({item: n, cost: p}));
+        // FF SAHIFASINI OCHISH
+        function showDiamonds() {
+            showPage('page-ff');
+        }
+
+        // ALMAZNI TANLASH VA SOTIB OLISH
+        function selectDiamond(card, name, price) {
+            // Oldingi tanlanganni o'chirish
+            document.querySelectorAll('.diamond-card').forEach(c => c.classList.remove('selected'));
+            // Yangisini tanlash
+            card.classList.add('selected');
+            
+            // Botga ma'lumot yuborish
+            tg.sendData(JSON.stringify({game: "Free Fire", item: name, cost: price, currency: "TJS"}));
             tg.close();
         }
+
+        // KARTANI NUSXALASH FUNKSIYASI
+        function copyCard(num) {
+            navigator.clipboard.writeText(num).then(() => {
+                tg.showPopup({title: "Nusxalandi!", message: "Karta raqami buferga nusxalandi."});
+            });
+        }
+        
+        // SKRINSHOT MA'LUMOTINI KO'RSATISH
+        function showScreenshotInfo() {
+            document.getElementById('screenshot-box').style.display = 'block';
+        }
+        
     </script>
 </body>
 </html>
