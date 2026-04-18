@@ -3,31 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Khidirov Shop</title>
+    <title>Khidirov Shop - OP's Pay Style</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; padding: 15px; margin: 0; }
-        .header { text-align: center; color: #f39c12; margin-bottom: 20px; }
-        .section-title { border-left: 4px solid #f39c12; padding-left: 10px; margin: 20px 0 10px; font-size: 18px; color: #f39c12; }
-        .card { background: #1e1e1e; border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .info h4 { margin: 0; font-size: 16px; color: #fff; }
-        .price { color: #00d2ff; font-weight: bold; margin-top: 5px; }
-        .buy-btn { background: #f39c12; border: none; color: black; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .pay-card { background: #252525; border: 1px dashed #555; border-radius: 10px; padding: 10px; margin-bottom: 8px; font-size: 14px; line-height: 1.6; }
+        /* Asosiy uslublar */
+        body { font-family: 'Helvetica Neue', sans-serif; background: #0c0d10; color: white; padding: 10px; margin: 0; }
+        .header { text-align: center; color: #fff; margin: 15px 0 25px; font-weight: bold; }
+        .header-title { font-size: 20px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* To'lov rekvizitlari */
+        .rekvizit-panel { background: #161a20; border-radius: 12px; padding: 15px; margin-bottom: 25px; border: 1px solid #2a2a2a; }
+        .rekvizit-title { color: #8e8e93; font-size: 13px; text-transform: uppercase; margin-bottom: 10px; font-weight: bold; }
+        .rekvizit-item { font-size: 14px; color: #fff; line-height: 1.8; border-bottom: 1px solid #2a2a2a; padding: 5px 0; }
+        .rekvizit-item b { color: #f39c12; }
+
+        /* Bo'lim sarlavhasi */
+        .section-title { font-size: 16px; color: #fff; margin: 0 0 15px 5px; font-weight: bold; }
+
+        /* Kafel ko'rinishi (GRID) */
+        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding-bottom: 20px; }
+
+        /* Mahsulot kafellari */
+        .grid-item { background: #161a20; border-radius: 12px; border: 1px solid #2a2a2a; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
+        .grid-item:hover { border-color: #f39c12; }
+
+        /* Olmos ikonkasi (fon sifatida) */
+        .grid-item::before { content: '💎'; position: absolute; font-size: 50px; opacity: 0.05; top: 0; left: -10px; }
+
+        /* Mahsulot nomi va miqdori */
+        .item-name { font-size: 15px; font-weight: bold; color: #fff; margin-bottom: 15px; }
+
+        /* Narx va Tanlash tugmasi jami */
+        .item-footer { display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid #2a2a2a; padding-top: 10px; }
+
+        /* Narx */
+        .item-price { font-size: 14px; font-weight: bold; color: #00d2ff; }
+
+        /* Tanlash tugmasi (pastroqda) */
+        .choose-btn { background: #f39c12; border: none; color: black; padding: 7px 15px; border-radius: 7px; font-size: 12px; font-weight: bold; }
+
     </style>
 </head>
 <body>
-    <div class="header"><h2>💎 KHIDIROV SHOP</h2></div>
+    <div class="header"><div class="header-title">Khidirov Shop</div></div>
 
-    <div class="section-title">💳 To'lov rekvizitlari</div>
-    <div class="pay-card">
-        <b>Visa:</b> 4444 8888 1215 6721<br>
-        <b>Alif:</b> +992 90 677 04 62<br>
-        <b>Eskhata / DC:</b> +992 90 706 12 20
+    <div class="rekvizit-panel">
+        <div class="rekvizit-title">💳 To'lov rekvizitlari</div>
+        <div class="rekvizit-item"><b>Visa:</b> 4444 8888 1215 6721</div>
+        <div class="rekvizit-item"><b>Alif:</b> +992 90 677 04 62</div>
+        <div class="rekvizit-item"><b>Eskhata / DC:</b> +992 90 706 12 20</div>
     </div>
 
     <div class="section-title">📦 Barcha Olmazlar</div>
-    <div id="shop"></div>
+    <div id="shop" class="grid-container"></div>
 
     <script>
         let tg = window.Telegram.WebApp;
@@ -35,28 +63,28 @@
 
         // BARCHA MAHSULOTLAR RO'YXATI
         const products = [
-            {name: "💎 100+10 Olmos", price: 10},
-            {name: "💎 310 Olmos", price: 30},
-            {name: "💎 520 Olmos", price: 55},
-            {name: "💎 1060 Olmos", price: 106},
-            {name: "💎 2180 Olmos", price: 220},
-            {name: "💎 5600 Olmos", price: 550},
-            {name: "📅 Haftalik Vaucher", price: 20},
-            {name: "🌕 Oylik Vaucher", price: 110},
-            {name: "☀️ Kunlik Paket", price: 5},
-            {name: "📈 Level Up Pass", price: 30},
-            {name: "🎟 Booyah Pass", price: 30}
+            {name: "100+10 Olmos", price: 10},
+            {name: "310 Olmos", price: 30},
+            {name: "520 Olmos", price: 55},
+            {name: "1060 Olmos", price: 106},
+            {name: "2180 Olmos", price: 220},
+            {name: "5600 Olmos", price: 550},
+            {name: "Haftalik Vaucher", price: 20},
+            {name: "Oylik Vaucher", price: 110},
+            {name: "Kunlik Paket", price: 5},
+            {name: "Level Up Pass", price: 30},
+            {name: "Booyah Pass", price: 30}
         ];
 
         const shop = document.getElementById('shop');
         products.forEach(p => {
             shop.innerHTML += `
-                <div class="card">
-                    <div class="info">
-                        <h4>${p.name}</h4>
-                        <div class="price">${p.price} TJS</div>
+                <div class="grid-item" onclick="buy('${p.name}', ${p.price})">
+                    <div class="item-name">${p.name}</div>
+                    <div class="item-footer">
+                        <div class="item-price">${p.price} TJS</div>
+                        <button class="choose-btn">Tanlash</button>
                     </div>
-                    <button class="buy-btn" onclick="buy('${p.name}', ${p.price})">Tanlash</button>
                 </div>`;
         });
 
