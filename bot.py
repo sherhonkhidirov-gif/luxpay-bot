@@ -96,7 +96,7 @@ async def pay_photo(message: types.Message, state: FSMContext):
                     # Adminga boradigan xabar
     caption = (
         f"🔔 **YANGI TO'LOV!**\n\n"
-        f"👤 User: @{user.username or 'Nomalum'}\n"
+        f"👤 User: @{user.username or 'Nomalum'}\n
         f"🆔 ID: `{user.id}`\n"
         f"🏦 Bank: **{data['method']}**\n"
         f"💰 Summa: **{data['amount']}** TJS"
