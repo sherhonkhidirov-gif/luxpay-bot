@@ -1,4 +1,5 @@
 import asyncio
+import os
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.utils.keyboard import InlineKeyboardBuilder, ReplyKeyboardBuilder
@@ -8,7 +9,7 @@ from aiogram.enums import ParseMode
 
 # --- SOZLAMALAR --- 
 API_TOKEN = "8642617336:AAEtQc8o0YEqKRH7Rt8vedsP9G08dv4p0FY"
-ADMIN_ID = 8642617336 
+ADMIN_ID = 8642617336  # O'z ID-ingizni tekshiring
 ADMIN_USERNAME = "@khidirov_garand"
 
 CHANNELS = ["@khidirov_garand1", "@freefireakkauntsavdokhidirov", "@khidirovotzif"] 
@@ -20,7 +21,7 @@ PRICES = {
     "☀️ Kunlik": 5, "📈 Level Up": 30, "🎟 Booyah Pass": 30
 }
 
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=API_TOKEN, parse_mode=ParseMode.MARKDOWN)
 dp = Dispatcher()
 
 class FillBalance(StatesGroup):
@@ -68,12 +69,12 @@ async def pay_start(message: types.Message, state: FSMContext):
     await message.answer("💰 **Qaysi bank orqali to'lov qilasiz?**", reply_markup=builder.as_markup())
     await state.set_state(FillBalance.choosing_method)
 
-@dp.callback_query(F.data.startswith("m_"))
+@dp.callback_query(F.data.startswith("m_"), FillBalance.choosing_method)
 async def pay_method(callback: types.CallbackQuery, state: FSMContext):
     m = callback.data.split("_")[1]
     nums = {"Visa": "4444 8888 1215 6721", "Alif": "+992 90 677 04 62", "Eskhata": "+992 90 706 12 20", "DC": "+992 706 12 20"}
     await state.update_data(method=m)
-    await callback.message.answer(f"✅ Tanlandi: **{m}**\n💳 Raqam: `{nums[m]}`\n\n**Summani yozing:**")
+    await callback.message.answer(f"✅ Tanlandi: **{m}**\n💳 Raqam: `{nums[m]}`\n\n**Summani yozing (masalan: 10):**")
     await state.set_state(FillBalance.waiting_for_amount)
     await callback.answer()
 
@@ -81,6 +82,7 @@ async def pay_method(callback: types.CallbackQuery, state: FSMContext):
 async def pay_amount(message: types.Message, state: FSMContext):
     if not message.text.isdigit():
         return await message.answer("Faqat raqam yozing!")
+    
     await state.update_data(amount=message.text)
     await message.answer(f"✅ Summa: {message.text} TJS\nEndi to'lov chekini (rasmini) yuboring.")
     await state.set_state(FillBalance.waiting_for_photo)
@@ -90,12 +92,13 @@ async def pay_photo(message: types.Message, state: FSMContext):
     data = await state.get_data()
     user = message.from_user
     
+    # Adminga boradigan tugmalar
     builder = InlineKeyboardBuilder()
     builder.row(
-        types.InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"accept_{am}_{uid}"),
+        types.InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"accept_{data['amount']}_{user.id}"),
         types.InlineKeyboardButton(text="❌ Rad etish", callback_data=f"deny_{user.id}")
     )
-                   # Mana shu qatorlar boshidagi bo'sh joy (probel) bir xil bo'lishi shart
+
     caption = (
         f"🔔 **YANGI TO'LOV!**\n\n"
         f"👤 User: @{user.username or 'Nomalum'}\n"
@@ -113,18 +116,27 @@ async def pay_photo(message: types.Message, state: FSMContext):
 async def admin_accept(callback: types.CallbackQuery):
     _, am, uid = callback.data.split("_")
     uid = int(uid)
-    if uid not in users_db: users_db[uid] = {'balance': 0}
-    users_db[uid]['balance'] += int(am)
+    am = int(am)
     
-    await bot.send_message(uid, f"✅ To'lovingiz tasdiqlandi!\n💰 Balansingizga **{am} TJS** qo'shildi.")
-    await callback.message.edit_caption(caption=callback.message.caption + "\n\n✅ **TASDIQLANDI**")
-    await callback.answer("Tasdiqlandi")
+    if uid not in users_db: users_db[uid] = {'balance': 0}
+    users_db[uid]['balance'] += am
+    
+    try:
+        await bot.send_message(uid, f"✅ To'lovingiz tasdiqlandi!\n💰 Balansingizga **{am} TJS** qo'shildi.")
+        await callback.message.edit_caption(caption=callback.message.caption + "\n\n✅ **TASDIQLANDI**")
+    except:
+        await callback.answer("Foydalanuvchiga xabar yuborib bo'lmadi.")
+    
+    await callback.answer("Muvaffaqiyatli tasdiqlandi")
 
 @dp.callback_query(F.data.startswith("deny_"))
 async def admin_deny(callback: types.CallbackQuery):
     uid = int(callback.data.split("_")[1])
-    await bot.send_message(uid, "❌ To'lovingiz rad etildi. Chekda xatolik bo'lishi mumkin.")
-    await callback.message.edit_caption(caption=callback.message.caption + "\n\n❌ **RAD ETILDI**")
+    try:
+        await bot.send_message(uid, "❌ To'lovingiz rad etildi. Chekda xatolik bo'lishi mumkin.")
+        await callback.message.edit_caption(caption=callback.message.caption + "\n\n❌ **RAD ETILDI**")
+    except:
+        await callback.answer("Foydalanuvchiga xabar yuborib bo'lmadi.")
     await callback.answer("Rad etildi")
 
 # --- OLMAZ XARID QILISH ---
@@ -138,21 +150,22 @@ async def shop_menu(message: types.Message):
 
 @dp.callback_query(F.data.startswith("buy_"))
 async def buy_process(callback: types.CallbackQuery):
-    _, p, n = callback.data.split("_")
-    p, uid = int(p), callback.from_user.id
+    data_parts = callback.data.split("_")
+    p = int(data_parts[1])
+    n = data_parts[2]
+    uid = callback.from_user.id
     
     if users_db.get(uid, {'balance':0})['balance'] >= p:
         users_db[uid]['balance'] -= p
-        # Adminga buyurtma
         admin_msg = (
             f"🛒 **YANGI BUYURTMA!**\n\n"
             f"👤 User: @{callback.from_user.username or 'User'}\n"
             f"🆔 ID: `{uid}`\n"
             f"📦 Paket: **{n}**\n"
-            f"💰 Narxi: {p} TJS"
+            f"💰 To'langan: {p} TJS"
         )
         await bot.send_message(ADMIN_ID, admin_msg)
-        await callback.message.answer(f"✅ Xarid qilindi: **{n}**\nTez orada admin sizga almazlarni yuboradi.")
+        await callback.message.answer(f"✅ Xarid qilindi: **{n}**\nTez orada admin almazlarni yuboradi.")
     else:
         await callback.answer("❌ Balansda mablag' yetarli emas!", show_alert=True)
 
@@ -165,13 +178,18 @@ async def show_bal(message: types.Message):
 @dp.message(F.text == "⚙️ Sozlamalar")
 async def settings(message: types.Message):
     builder = InlineKeyboardBuilder()
-    builder.row(types.InlineKeyboardButton(text="📢 Isbotlar kanali", url="https://t.me/khidirovotzif"))
+    builder.row(types.InlineKeyboardButton(text="📢 Isbotlar", url="https://t.me/khidirovotzif"))
     builder.row(types.InlineKeyboardButton(text="👨‍💻 Admin", url=f"https://t.me/{ADMIN_USERNAME[1:]}"))
     await message.answer("⚙️ **Sozlamalar:**", reply_markup=builder.as_markup())
 
 async def main():
+    # Render uchun eski yangilanishlarni tozalash (dublikat xabarlar oldini oladi)
+    await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        pass
     
