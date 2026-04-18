@@ -92,15 +92,14 @@ async def pay_photo(message: types.Message, state: FSMContext):
     
     builder = InlineKeyboardBuilder()
     builder.row(types.InlineKeyboardButton(text="✅ Tasdiqlash", callback_data=f"accept_{data['amount']}_{user.id}"))
-    builder.row(types.InlineKeyboardButton(text="❌ Rad etish", callback_data=f"deny_{user.id}"))
-    
-    # Adminga boradigan xabar
+    builder.row(types.InlineKeyboardButton(text="❌ Rad etish", callback_data=f"deny_{user.id}")
+                    # Adminga boradigan xabar
     caption = (
         f"🔔 **YANGI TO'LOV!**\n\n"
-        f"👤 User: @{user.username or 'Noma'lum'}\n"
+        f"👤 User: @{user.username or 'Nomalum'}\n"
         f"🆔 ID: `{user.id}`\n"
         f"🏦 Bank: **{data['method']}**\n"
-        f"💰 Summa: **{data['amount']} TJS**"
+        f"💰 Summa: **{data['amount']}** TJS"
     )
     
     await bot.send_photo(ADMIN_ID, message.photo[-1].file_id, caption=caption, reply_markup=builder.as_markup())
