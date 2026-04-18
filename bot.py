@@ -12,7 +12,7 @@ API_TOKEN = "8642617336:AAEtQc8o0YEqKRH7Rt8vedsP9G08dv4p0FY"
 ADMIN_ID = 8642617336 
 ADMIN_USERNAME = "@khidirov_garand"
 
-# Kanallar ro'yxati (Barcha kanallarda bot ADMIN bo'lishi shart!)
+# Kanallar ro'yxati (Bot bu kanallarda admin bo'lishi shart!)
 CHANNELS = ["@khidirov_garand1", "@freefireakkauntsavdokhidirov", "@khidirovotzif"] 
 users_db = {} 
 
@@ -32,7 +32,7 @@ class FillBalance(StatesGroup):
 
 # --- YORDAMCHI FUNKSIYALAR ---
 async def check_sub(user_id):
-    """Barcha kanallarga obunani tekshirish"""
+    """Barcha 3 ta kanalga obunani tekshiradi"""
     for channel in CHANNELS:
         try:
             member = await bot.get_chat_member(chat_id=channel, user_id=user_id)
@@ -50,15 +50,11 @@ def main_menu():
     return builder.as_markup(resize_keyboard=True)
 
 async def send_sub_message(message: types.Message):
-    """Obuna bo'lmaganlarga xabar yuborish"""
+    """Obuna xabarini chiqarish"""
     builder = InlineKeyboardBuilder()
-    # Har bir kanal uchun tugma yaratish
     for channel in CHANNELS:
         builder.row(types.InlineKeyboardButton(text=f"Obuna bo'lish {channel}", url=f"https://t.me/{channel[1:]}"))
-    
-    # Tekshirish tugmasi
     builder.row(types.InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_subs"))
-    
     await message.answer("Botdan foydalanish uchun barcha kanallarga obuna bo'ling:", reply_markup=builder.as_markup())
 
 # --- HANDLERS ---
@@ -135,11 +131,11 @@ async def pay_photo(message: types.Message, state: FSMContext):
     await message.answer("✅ Chek yuborildi! Admin tasdiqlashini kuting.")
     await state.clear()
 
-# --- ADMIN QABUL QILISH ---
+# --- ADMIN TASDIQLASH ---
 @dp.callback_query(F.data.startswith("accept_"))
 async def admin_accept(callback: types.CallbackQuery):
-    _, am, uid = callback.data.split("_")
-    uid, am = int(uid), int(am)
+    data_parts = callback.data.split("_")
+    am, uid = int(data_parts[1]), int(data_parts[2])
     
     if uid not in users_db: users_db[uid] = {'balance': 0}
     users_db[uid]['balance'] += am
@@ -148,8 +144,7 @@ async def admin_accept(callback: types.CallbackQuery):
         await bot.send_message(uid, f"✅ To'lovingiz tasdiqlandi!\n💰 Balansingizga **{am} TJS** qo'shildi.")
         await callback.message.edit_caption(caption=callback.message.caption + "\n\n✅ **TASDIQLANDI**")
     except:
-        await callback.answer("Foydalanuvchiga xabar yuborib bo'lmadi.")
-    
+        pass
     await callback.answer("Muvaffaqiyatli tasdiqlandi")
 
 @dp.callback_query(F.data.startswith("deny_"))
@@ -159,7 +154,7 @@ async def admin_deny(callback: types.CallbackQuery):
         await bot.send_message(uid, "❌ To'lovingiz rad etildi. Chekda xatolik bo'lishi mumkin.")
         await callback.message.edit_caption(caption=callback.message.caption + "\n\n❌ **RAD ETILDI**")
     except:
-        await callback.answer("Foydalanuvchiga xabar yuborib bo'lmadi.")
+        pass
     await callback.answer("Rad etildi")
 
 # --- OLMAZ XARID QILISH ---
@@ -206,6 +201,7 @@ async def settings(message: types.Message):
     await message.answer("⚙️ **Sozlamalar:**", reply_markup=builder.as_markup())
 
 async def main():
+    # Dublikat xabarlar oldini olish uchun webhookni tozalash
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
