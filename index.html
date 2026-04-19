@@ -162,18 +162,17 @@
 
     function closeModal() { document.getElementById('payModal').style.display = 'none'; }
 
+    // TO'G'IRLANGAN: tg.close va tg.sendData olib tashlandi
     function sendPayRequest() {
         let amt = document.getElementById('payAmount').value;
         if(!amt) return alert('Miqdorni yozing!');
         
-        tg.sendData(JSON.stringify({
-            action: "topup", 
-            bank: currentBank, 
-            amount: amt, 
-            cur: currentCur,
-            msg: "To'lov qilindi, skrinshot kutilmoqda"
-        }));
-        tg.close();
+        tg.showPopup({
+            title: "So'rov yuborildi",
+            message: `Bank: ${currentBank}\nSumma: ${amt} ${currentCur}\n\nTo'lovni amalga oshiring va botga skrinshotni yuboring!`,
+            buttons: [{type: "ok"}]
+        });
+        closeModal();
     }
 
     const items = [
@@ -191,12 +190,15 @@
             </div>`;
     });
 
+    // TO'G'IRLANGAN: Tasdiqlangandan so'ng yopilmaydi
     function buyItem(n, p) {
         tg.showConfirm(`${n} sotib olasizmi? Narxi: ${p} TJS`, (ok) => {
-            if(ok) { tg.sendData(JSON.stringify({action: "buy", item: n, cost: p})); tg.close(); }
+            if(ok) { 
+                tg.showAlert("Sotib olish so'rovi yuborildi. Tez orada tasdiqlanadi!"); 
+            }
         });
     }
 </script>
 </body>
-        </html>
+    </html>
     
